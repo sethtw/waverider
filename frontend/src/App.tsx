@@ -8,6 +8,7 @@ import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { logger } from './utils/logger';
 import { WaveformViewer } from './components/WaveformViewer/WaveformViewer';
 import { AudioInput } from './components/AudioInput/AudioInput';
+import { AnalysisPanel } from './components/AnalysisPanel/AnalysisPanel';
 import { useAudioStore } from './stores/audioStore';
 import { formatTime } from './utils';
 import './App.css';
@@ -273,16 +274,7 @@ function ControlsPanel() {
   );
 }
 
-function AnalysisPanel() {
-  return (
-    <div className="panel">
-      <h3 className="text-lg font-semibold mb-4">Analysis Results</h3>
-      <div className="text-sm text-one-dark-fg-alt">
-        No analysis results available
-      </div>
-    </div>
-  );
-}
+
 
 
 

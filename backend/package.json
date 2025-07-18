@@ -1,0 +1,40 @@
+{
+  "name": "waverider-backend",
+  "version": "1.0.0",
+  "description": "Waverider Audio Analysis Engine Backend",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "jest",
+    "lint": "eslint src/**/*.js"
+  },
+  "keywords": ["audio", "analysis", "wavesurfer", "music"],
+  "author": "Waverider Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "fft-js": "^0.0.12",
+    "audio-buffer-utils": "^2.0.0",
+    "web-audio-api": "^0.2.2",
+    "node-wav": "^0.0.2",
+    "fluent-ffmpeg": "^2.1.2",
+    "uuid": "^9.0.1",
+    "dotenv": "^16.3.1",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1",
+    "jest": "^29.7.0",
+    "eslint": "^8.54.0",
+    "supertest": "^6.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+} 

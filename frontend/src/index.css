@@ -1,68 +1,203 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom CSS Variables for One Dark Pro Theme */
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --color-bg: #ffffff;
+  --color-bg-alt: #f8f9fa;
+  --color-fg: #2c3e50;
+  --color-fg-alt: #6c757d;
+  --color-red: #e74c3c;
+  --color-orange: #f39c12;
+  --color-yellow: #f1c40f;
+  --color-green: #27ae60;
+  --color-cyan: #17a2b8;
+  --color-blue: #3498db;
+  --color-purple: #9b59b6;
+  --color-purple-alt: #e74c3c;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+.dark {
+  --color-bg: #282c34;
+  --color-bg-alt: #21252b;
+  --color-fg: #abb2bf;
+  --color-fg-alt: #5c6370;
+  --color-red: #e06c75;
+  --color-orange: #d19a66;
+  --color-yellow: #e5c07b;
+  --color-green: #98c379;
+  --color-cyan: #56b6c2;
+  --color-blue: #61afef;
+  --color-purple: #c678dd;
+  --color-purple-alt: #be5046;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+/* Base styles */
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
   }
-  a:hover {
-    color: #747bff;
+  
+  body {
+    @apply transition-colors duration-200;
+    background-color: var(--color-bg);
+    color: var(--color-fg);
   }
-  button {
-    background-color: #f9f9f9;
+  
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
   }
+  
+  ::-webkit-scrollbar-track {
+    background: var(--color-bg-alt);
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-fg-alt);
+    border-radius: 4px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-fg);
+  }
+}
+
+/* Component styles */
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-md font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+  }
+  
+  .btn-primary {
+    @apply btn bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500;
+  }
+  
+  .btn-secondary {
+    @apply btn bg-gray-200 hover:bg-gray-300 text-gray-900 focus:ring-gray-500 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white;
+  }
+  
+  .btn-danger {
+    @apply btn bg-red-600 hover:bg-red-700 text-white focus:ring-red-500;
+  }
+  
+  .input {
+    @apply px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white;
+  }
+  
+  .card {
+    @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm;
+  }
+  
+  .panel {
+    @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4;
+  }
+}
+
+/* Utility styles */
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent;
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+  
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Wavesurfer.js custom styles */
+.wavesurfer-container {
+  @apply rounded-lg overflow-hidden;
+}
+
+.wavesurfer-region {
+  @apply opacity-60 hover:opacity-80 transition-opacity duration-200;
+}
+
+.wavesurfer-handle {
+  @apply cursor-ew-resize;
+}
+
+.wavesurfer-handle-left {
+  @apply cursor-w-resize;
+}
+
+.wavesurfer-handle-right {
+  @apply cursor-e-resize;
+}
+
+/* Custom One Dark Pro color classes */
+.bg-one-dark-bg {
+  background-color: var(--color-bg);
+}
+
+.bg-one-dark-bg-alt {
+  background-color: var(--color-bg-alt);
+}
+
+.text-one-dark-fg {
+  color: var(--color-fg);
+}
+
+.text-one-dark-fg-alt {
+  color: var(--color-fg-alt);
+}
+
+.text-one-dark-red {
+  color: var(--color-red);
+}
+
+.text-one-dark-orange {
+  color: var(--color-orange);
+}
+
+.text-one-dark-yellow {
+  color: var(--color-yellow);
+}
+
+.text-one-dark-green {
+  color: var(--color-green);
+}
+
+.text-one-dark-cyan {
+  color: var(--color-cyan);
+}
+
+.text-one-dark-blue {
+  color: var(--color-blue);
+}
+
+.text-one-dark-purple {
+  color: var(--color-purple);
 }

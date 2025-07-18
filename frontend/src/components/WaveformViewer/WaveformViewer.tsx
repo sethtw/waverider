@@ -27,7 +27,7 @@ export function WaveformViewer({ className = '', height = 200 }: WaveformViewerP
   const currentSource = useAudioStore((state) => state.currentSource);
   const storeRegions = useAudioStore((state) => state.regions);
   // Get actions once without subscribing, as they are static
-  const { play, pause, seek, addRegion, updateRegion } = useAudioStore.getState();
+  const { addRegion, updateRegion, setWavesurfer, setIsPlaying, seek, setReady } = useAudioStore.getState();
 
   const [regionsPlugin] = useState(() => RegionsPlugin.create());
   const plugins = useMemo(() => [regionsPlugin], [regionsPlugin]);
@@ -80,6 +80,20 @@ export function WaveformViewer({ className = '', height = 200 }: WaveformViewerP
     interact: true,
   });
 
+  // Share the wavesurfer instance with the store
+  useEffect(() => {
+    setWavesurfer(wavesurfer || null);
+    // On unmount, clear the wavesurfer instance from the store
+    return () => {
+      setWavesurfer(null);
+    };
+  }, [wavesurfer, setWavesurfer]);
+
+  // Sync isReady state to the store
+  useEffect(() => {
+    setReady(isReady);
+  }, [isReady, setReady]);
+
   // Enable drag selection when the plugin and wavesurfer are ready
   useEffect(() => {
     if (!regionsPlugin || !isReady) return;
@@ -88,14 +102,10 @@ export function WaveformViewer({ className = '', height = 200 }: WaveformViewerP
     });
   }, [regionsPlugin, isReady]);
 
-  // Sync store state with wavesurfer state
+  // Sync wavesurfer state to store
   useEffect(() => {
-    if (isPlaying) {
-      play();
-    } else {
-      pause();
-    }
-  }, [isPlaying, play, pause]);
+    setIsPlaying(isPlaying);
+  }, [isPlaying, setIsPlaying]);
 
   useEffect(() => {
     seek(currentTime);

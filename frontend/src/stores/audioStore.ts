@@ -5,6 +5,7 @@
 
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
+import type WaveSurfer from 'wavesurfer.js';
 import { logger } from '../utils/logger';
 import type { 
   AudioSource, 
@@ -21,6 +22,7 @@ interface AudioState {
   currentSource: AudioSource | null;
   isLoading: boolean;
   error: string | null;
+  isReady: boolean;
   
   // Playback state
   isPlaying: boolean;
@@ -29,6 +31,9 @@ interface AudioState {
   volume: number;
   speed: number;
   
+  // Wavesurfer instance
+  wavesurfer: WaveSurfer | null;
+
   // Regions and analysis
   regions: AudioRegion[];
   selectedRegions: string[];
@@ -48,13 +53,18 @@ interface AudioActions {
   clearAudio: () => void;
   setError: (error: string | null) => void;
   setLoading: (loading: boolean) => void;
+  setReady: (isReady: boolean) => void;
   
+  // Wavesurfer instance
+  setWavesurfer: (wavesurfer: WaveSurfer | null) => void;
+
   // Playback controls
   play: () => void;
   pause: () => void;
   seek: (time: number) => void;
   setVolume: (volume: number) => void;
   setSpeed: (speed: number) => void;
+  setIsPlaying: (isPlaying: boolean) => void;
   
   // Regions management
   addRegion: (region: AudioRegion) => void;
@@ -133,11 +143,17 @@ export const useAudioStore = create<AudioStore>()(
     currentSource: null,
     isLoading: false,
     error: null,
+    isReady: false,
     isPlaying: false,
     currentTime: 0,
     duration: 0,
     volume: 1,
     speed: 1,
+
+    // Wavesurfer instance
+    wavesurfer: null,
+    
+    // Regions and analysis
     regions: [],
     selectedRegions: [],
     profiles: defaultProfiles,
@@ -214,17 +230,22 @@ export const useAudioStore = create<AudioStore>()(
       set({ isLoading: loading });
     },
 
+    setReady: (isReady: boolean) => {
+      set({ isReady });
+    },
+
+    // Wavesurfer instance
+    setWavesurfer: (wavesurfer) => set({ wavesurfer }),
+
     // Playback actions
     play: () => {
       logger.info('Play requested from store');
-      set({ isPlaying: true });
-      logger.info('Play state updated to true');
+      get().wavesurfer?.play();
     },
 
     pause: () => {
       logger.info('Pause requested from store');
-      set({ isPlaying: false });
-      logger.info('Pause state updated to false');
+      get().wavesurfer?.pause();
     },
 
     seek: (time: number) => {
@@ -241,6 +262,10 @@ export const useAudioStore = create<AudioStore>()(
     setSpeed: (speed: number) => {
       const clampedSpeed = Math.max(0.25, Math.min(speed, 4));
       set({ speed: clampedSpeed });
+    },
+
+    setIsPlaying: (isPlaying) => {
+      set({ isPlaying });
     },
 
     // Region actions

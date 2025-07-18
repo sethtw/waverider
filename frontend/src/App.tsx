@@ -167,7 +167,8 @@ function ControlsPanel() {
     seek, 
     setVolume, 
     setSpeed,
-    currentSource
+    currentSource,
+    isReady
   } = useAudioStore();
 
   const handlePlayPause = () => {
@@ -218,7 +219,7 @@ function ControlsPanel() {
         <button 
           className="btn-secondary" 
           onClick={handlePlayPause}
-          disabled={duration === 0}
+          disabled={!isReady}
         >
           {isPlaying ? '⏸️' : '▶️'}
         </button>
@@ -232,7 +233,7 @@ function ControlsPanel() {
             max={duration}
             value={currentTime}
             onChange={handleSeek}
-            disabled={duration === 0}
+            disabled={!isReady}
             className="w-full"
           />
         </div>
@@ -248,12 +249,14 @@ function ControlsPanel() {
             step="0.1"
             value={volume}
             onChange={handleVolumeChange}
+            disabled={!isReady}
             className="w-20"
           />
         </div>
         <select
           value={speed}
           onChange={handleSpeedChange}
+          disabled={!isReady}
           className="bg-gray-700 text-gray-300 px-2 py-1 rounded text-sm"
         >
           <option value={0.25}>0.25x</option>

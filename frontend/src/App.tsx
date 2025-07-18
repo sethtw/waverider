@@ -6,6 +6,10 @@
 import React from 'react';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { logger } from './utils/logger';
+import { WaveformViewer } from './components/WaveformViewer/WaveformViewer';
+import { AudioInput } from './components/AudioInput/AudioInput';
+import { useAudioStore } from './stores/audioStore';
+import { formatTime } from './utils';
 import './App.css';
 
 function App() {
@@ -77,22 +81,7 @@ function AudioInputPanel() {
   return (
     <div className="panel">
       <h3 className="text-lg font-semibold mb-4">Audio Input</h3>
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Audio Source
-          </label>
-          <select className="input w-full">
-            <option>Select audio source...</option>
-            <option>Local File</option>
-            <option>URL</option>
-            <option>YouTube</option>
-          </select>
-        </div>
-        <button className="btn-primary w-full">
-          Load Audio
-        </button>
-      </div>
+      <AudioInput />
     </div>
   );
 }
@@ -130,19 +119,95 @@ function SessionPanel() {
 }
 
 function WaveformPanel() {
+  const { currentSource, isLoading, error } = useAudioStore();
+
+  if (isLoading) {
+    return (
+      <div className="panel">
+        <h3 className="text-lg font-semibold mb-4">Waveform</h3>
+        <div className="h-64 bg-gray-800 rounded-lg flex items-center justify-center">
+          <div className="text-one-dark-fg-alt">
+            Loading audio...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="panel">
+        <h3 className="text-lg font-semibold mb-4">Waveform</h3>
+        <div className="h-64 bg-gray-800 rounded-lg flex items-center justify-center">
+          <div className="text-red-400">
+            Error: {error}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="panel">
       <h3 className="text-lg font-semibold mb-4">Waveform</h3>
-      <div className="h-64 bg-gray-800 rounded-lg flex items-center justify-center">
-        <div className="text-one-dark-fg-alt">
-          Load an audio file to see the waveform
-        </div>
-      </div>
+      <WaveformViewer height={300} />
     </div>
   );
 }
 
 function ControlsPanel() {
+  const { 
+    isPlaying, 
+    currentTime, 
+    duration, 
+    volume, 
+    speed,
+    play, 
+    pause, 
+    seek, 
+    setVolume, 
+    setSpeed,
+    currentSource
+  } = useAudioStore();
+
+  const handlePlayPause = () => {
+    console.log('Play button clicked', { isPlaying });
+    if (isPlaying) {
+      console.log('Calling pause()');
+      pause();
+    } else {
+      console.log('Calling play()');
+      play();
+    }
+  };
+
+  const handleSeek = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const time = parseFloat(event.target.value);
+    seek(time);
+  };
+
+  const handleVolumeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newVolume = parseFloat(event.target.value);
+    setVolume(newVolume);
+  };
+
+  const handleSpeedChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const newSpeed = parseFloat(event.target.value);
+    setSpeed(newSpeed);
+  };
+
+  // Don't show controls if no audio is loaded
+  if (!currentSource) {
+    return (
+      <div className="panel">
+        <h3 className="text-lg font-semibold mb-4">Playback Controls</h3>
+        <div className="text-center text-gray-400 py-8">
+          Load an audio file to enable playback controls
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="panel">
       <h3 className="text-lg font-semibold mb-4">Playback Controls</h3>
@@ -150,11 +215,12 @@ function ControlsPanel() {
         <button className="btn-secondary" disabled>
           ⏮️
         </button>
-        <button className="btn-secondary" disabled>
-          ▶️
-        </button>
-        <button className="btn-secondary" disabled>
-          ⏸️
+        <button 
+          className="btn-secondary" 
+          onClick={handlePlayPause}
+          disabled={duration === 0}
+        >
+          {isPlaying ? '⏸️' : '▶️'}
         </button>
         <button className="btn-secondary" disabled>
           ⏭️
@@ -162,13 +228,43 @@ function ControlsPanel() {
         <div className="flex-1">
           <input
             type="range"
+            min="0"
+            max={duration}
+            value={currentTime}
+            onChange={handleSeek}
+            disabled={duration === 0}
             className="w-full"
-            disabled
           />
         </div>
         <span className="text-sm text-one-dark-fg-alt">
-          00:00 / 00:00
+          {formatTime(currentTime)} / {formatTime(duration)}
         </span>
+        <div className="flex items-center space-x-2">
+          <span className="text-sm text-one-dark-fg-alt">🔊</span>
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.1"
+            value={volume}
+            onChange={handleVolumeChange}
+            className="w-20"
+          />
+        </div>
+        <select
+          value={speed}
+          onChange={handleSpeedChange}
+          className="bg-gray-700 text-gray-300 px-2 py-1 rounded text-sm"
+        >
+          <option value={0.25}>0.25x</option>
+          <option value={0.5}>0.5x</option>
+          <option value={0.75}>0.75x</option>
+          <option value={1}>1x</option>
+          <option value={1.25}>1.25x</option>
+          <option value={1.5}>1.5x</option>
+          <option value={2}>2x</option>
+          <option value={4}>4x</option>
+        </select>
       </div>
     </div>
   );

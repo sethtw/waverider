@@ -75,11 +75,10 @@ export interface AudioRegion {
   id: string;
   start: number;
   end: number;
-  label: string;
-  color: string;
-  type: 'detected' | 'manual';
-  profileId?: string;
-  metadata?: RegionMetadata;
+  label?: string;
+  color?: string;
+  data?: { [key: string]: any };
+  [key: string]: any; // Allow other properties
 }
 
 export interface RegionMetadata {

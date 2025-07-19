@@ -9,6 +9,8 @@ import { logger } from './utils/logger';
 import { WaveformViewer } from './components/WaveformViewer/WaveformViewer';
 import { AudioInput } from './components/AudioInput/AudioInput';
 import { AnalysisPanel } from './components/AnalysisPanel/AnalysisPanel';
+import { ProfilePanel } from './components/ProfilePanel/ProfilePanel';
+import { SessionPanel } from './components/SessionPanel/SessionPanel';
 import { useAudioStore } from './stores/audioStore';
 import { formatTime } from './utils';
 import './App.css';
@@ -87,37 +89,9 @@ function AudioInputPanel() {
   );
 }
 
-function ProfilePanel() {
-  return (
-    <div className="panel">
-      <h3 className="text-lg font-semibold mb-4">Audio Profiles</h3>
-      <div className="space-y-2">
-        <div className="text-sm text-one-dark-fg-alt">
-          No profiles loaded
-        </div>
-        <button className="btn-secondary w-full">
-          Create Profile
-        </button>
-      </div>
-    </div>
-  );
-}
 
-function SessionPanel() {
-  return (
-    <div className="panel">
-      <h3 className="text-lg font-semibold mb-4">Sessions</h3>
-      <div className="space-y-2">
-        <div className="text-sm text-one-dark-fg-alt">
-          No sessions saved
-        </div>
-        <button className="btn-secondary w-full">
-          Save Session
-        </button>
-      </div>
-    </div>
-  );
-}
+
+
 
 function WaveformPanel() {
   const { currentSource, isLoading, error } = useAudioStore();

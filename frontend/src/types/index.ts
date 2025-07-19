@@ -99,6 +99,12 @@ export interface AudioAnalysis {
   profiles: AudioProfile[];
   analysisDate: Date;
   version: string;
+  analysis: {
+    amplitude: any;
+    spectral: any;
+    patterns: any;
+    regions: any;
+  }
 }
 
 export interface AnalysisResult {

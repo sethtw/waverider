@@ -43,6 +43,7 @@ interface AudioState {
   };
 
   // Regions and analysis
+  areRegionsReady: boolean;
   regions: AudioRegion[];
   selectedRegions: string[];
   profiles: AudioProfile[];
@@ -75,6 +76,7 @@ interface AudioActions {
   setIsPlaying: (isPlaying: boolean) => void;
   
   // Regions management
+  setRegionsReady: (areRegionsReady: boolean) => void;
   addRegion: (region: AudioRegion) => void;
   updateRegion: (id: string, updates: Partial<AudioRegion>) => void;
   removeRegion: (id: string) => void;
@@ -176,6 +178,7 @@ export const useAudioStore = create<AudioStore>()(
     },
 
     // Regions and analysis
+    areRegionsReady: true,
     regions: [],
     selectedRegions: [],
     profiles: defaultProfiles,
@@ -291,6 +294,10 @@ export const useAudioStore = create<AudioStore>()(
     },
 
     // Region actions
+    setRegionsReady: (areRegionsReady: boolean) => {
+      set({ areRegionsReady });
+    },
+
     addRegion: (region) => {
       logger.info('Adding region', { region });
       // Prevent adding duplicates
@@ -560,6 +567,7 @@ export const useAudioStore = create<AudioStore>()(
         duration: session.audioSource.duration,
         currentTime: 0,
         error: null,
+        areRegionsReady: false,
       });
     },
 

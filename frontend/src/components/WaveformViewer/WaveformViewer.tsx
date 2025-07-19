@@ -26,8 +26,9 @@ export function WaveformViewer({ className = '', height = 200 }: WaveformViewerP
   // Use selective state selectors to prevent re-renders on unrelated state changes
   const currentSource = useAudioStore((state) => state.currentSource);
   const storeRegions = useAudioStore((state) => state.regions);
+  const areRegionsReady = useAudioStore((state) => state.areRegionsReady);
   // Get actions once without subscribing, as they are static
-  const { addRegion, updateRegion, setWavesurfer, setIsPlaying, seek, setReady } = useAudioStore.getState();
+  const { addRegion, updateRegion, setWavesurfer, setIsPlaying, seek, setReady, setRegionsReady } = useAudioStore.getState();
 
   const [regionsPlugin] = useState(() => RegionsPlugin.create());
   const plugins = useMemo(() => [regionsPlugin], [regionsPlugin]);
@@ -92,7 +93,10 @@ export function WaveformViewer({ className = '', height = 200 }: WaveformViewerP
   // Sync isReady state to the store
   useEffect(() => {
     setReady(isReady);
-  }, [isReady, setReady]);
+    if (isReady) {
+      setRegionsReady(true);
+    }
+  }, [isReady, setReady, setRegionsReady]);
 
   // Enable drag selection when the plugin and wavesurfer are ready
   useEffect(() => {
@@ -121,6 +125,8 @@ export function WaveformViewer({ className = '', height = 200 }: WaveformViewerP
       return;
     }
 
+    if (!areRegionsReady) return;
+
     const log = logger.child('WaveformViewer');
     log.info('Syncing regions from store to plugin');
     isSyncing.current = true;
@@ -140,7 +146,7 @@ export function WaveformViewer({ className = '', height = 200 }: WaveformViewerP
     setTimeout(() => {
         isSyncing.current = false;
     }, 100);
-  }, [storeRegions, regionsPlugin, isReady]);
+  }, [storeRegions, regionsPlugin, isReady, areRegionsReady]);
 
   // Temporary button to test adding regions
   const handleAddRegion = () => {

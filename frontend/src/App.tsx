@@ -14,6 +14,7 @@ import { SessionPanel } from './components/SessionPanel/SessionPanel';
 import { useAudioStore } from './stores/audioStore';
 import { formatTime } from './utils';
 import './App.css';
+import { RegionPanel } from './components/RegionPanel/RegionPanel';
 
 function App() {
   logger.info('Waverider application starting');
@@ -40,7 +41,7 @@ function App() {
         </header>
 
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Sidebar */}
             <aside className="lg:col-span-1">
               <div className="space-y-6">
@@ -51,12 +52,10 @@ function App() {
             </aside>
 
             {/* Main Content */}
-            <div className="lg:col-span-3">
-              <div className="space-y-6">
-                <WaveformPanel />
-                <ControlsPanel />
-                <AnalysisPanel />
-              </div>
+            <div className="md:col-span-2 space-y-4">
+              <WaveformViewer />
+              <RegionPanel />
+              <AnalysisPanel />
             </div>
           </div>
         </main>

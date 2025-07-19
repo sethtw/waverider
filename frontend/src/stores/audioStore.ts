@@ -30,6 +30,7 @@ interface AudioState {
   duration: number;
   volume: number;
   speed: number;
+  activeRegion: AudioRegion | null;
   
   // Wavesurfer instance
   wavesurfer: WaveSurfer | null;
@@ -72,6 +73,9 @@ interface AudioActions {
   removeRegion: (id: string) => void;
   selectRegion: (id: string, selected?: boolean) => void;
   clearRegions: () => void;
+  playRegion: (region: AudioRegion) => void;
+  exportRegions: () => string;
+  importRegions: (regionsData: string) => void;
   
   // Profiles management
   addProfile: (profile: Omit<AudioProfile, 'id' | 'createdAt' | 'updatedAt'>) => void;
@@ -149,6 +153,7 @@ export const useAudioStore = create<AudioStore>()(
     duration: 0,
     volume: 1,
     speed: 1,
+    activeRegion: null,
 
     // Wavesurfer instance
     wavesurfer: null,
@@ -310,6 +315,29 @@ export const useAudioStore = create<AudioStore>()(
       set({ regions: [], selectedRegions: [] });
     },
 
+    playRegion: (region) => {
+      logger.info('Playing region', { regionId: region.id });
+      set({ activeRegion: region });
+      get().wavesurfer?.setTime(region.start);
+      get().wavesurfer?.play();
+    },
+
+    exportRegions: () => {
+      const { regions } = get();
+      return JSON.stringify(regions, null, 2);
+    },
+
+    importRegions: (regionsData: string) => {
+      try {
+        const regions = JSON.parse(regionsData);
+        // TODO: Add validation for the imported data
+        set({ regions });
+      } catch (error) {
+        logger.error('Failed to import regions', error as Error);
+        set({ error: 'Invalid regions data' });
+      }
+    },
+
     // Profile actions
     addProfile: (profileData) => {
       const profile: AudioProfile = {
@@ -385,6 +413,12 @@ export const useAudioStore = create<AudioStore>()(
           profiles: state.profiles,
           analysisDate: new Date(),
           version: '1.0.0',
+          analysis: {
+            amplitude: {},
+            spectral: {},
+            patterns: {},
+            regions: state.regions,
+          },
         },
         playbackSettings: {
           volume: state.volume,
@@ -460,6 +494,25 @@ export const useAudioStore = create<AudioStore>()(
       }
     },
   }))
+);
+
+useAudioStore.subscribe(
+  (state) => state.wavesurfer,
+  (wavesurfer) => {
+    if (!wavesurfer) return;
+
+    const subscription = wavesurfer.on('audioprocess', (currentTime) => {
+      const { activeRegion } = useAudioStore.getState();
+      if (activeRegion && currentTime >= activeRegion.end) {
+        wavesurfer.pause();
+        useAudioStore.setState({ activeRegion: null });
+      }
+    });
+
+    return () => {
+      subscription();
+    };
+  }
 );
 
 // Persist sessions to localStorage

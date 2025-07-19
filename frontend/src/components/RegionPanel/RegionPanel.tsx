@@ -12,24 +12,25 @@ import type { AudioRegion } from '../../types';
 
 export function RegionPanel() {
   const regions = useAudioStore((state) => state.regions);
-  const activeRegion = useAudioStore((state) => state.activeRegion);
+  const regionPlayback = useAudioStore((state) => state.regionPlayback);
+  const isGlobalPlaying = useAudioStore((state) => state.isPlaying);
   const selectedRegions = useAudioStore((state) => state.selectedRegions);
   const {
-    removeRegion,
+    removeSelectedRegions,
     updateRegion,
-    playRegion,
     selectRegion,
     exportRegions,
     importRegions,
+    playSelectedRegions,
+    pauseRegionPlayback,
+    toggleLoop,
+    play,
+    pause,
   } = useAudioStore.getState();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState<AudioRegion | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-
-  const handleRemoveRegion = (id: string) => {
-    logger.info(`Request to remove region ${id}`);
-    removeRegion(id);
-  };
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleEditRegion = (region: AudioRegion) => {
     setSelectedRegion(region);
@@ -81,26 +82,98 @@ export function RegionPanel() {
     fileInputRef.current?.click();
   };
 
+  const handleGlobalPlayPause = () => {
+    if (selectedRegions.length > 0) {
+      if (regionPlayback.isPlaying) {
+        pauseRegionPlayback();
+      } else {
+        playSelectedRegions();
+      }
+    } else {
+      if (isGlobalPlaying) {
+        pause();
+      } else {
+        play();
+      }
+    }
+  };
+
+  const isPlaybackActive = selectedRegions.length > 0 ? regionPlayback.isPlaying : isGlobalPlaying;
+
   return (
     <div className="bg-gray-800 text-white p-4 rounded-lg">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-bold">Regions</h3>
-        <div className="space-x-2">
-          <button className="btn-secondary" onClick={triggerImport}>
-            Import
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="loop-checkbox"
+              checked={regionPlayback.isLooping}
+              onChange={toggleLoop}
+              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            <label htmlFor="loop-checkbox" className="ml-2 text-sm text-gray-300">
+              Loop
+            </label>
+          </div>
+          <button onClick={handleGlobalPlayPause} className="btn-primary">
+            {isPlaybackActive ? '❚❚' : '▶'}
           </button>
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleImport}
-            className="hidden"
-            accept=".json"
-          />
-          <button className="btn-secondary" onClick={handleExport}>
-            Export
-          </button>
+
+          <div className="relative">
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="btn-secondary"
+            >
+              ⋮
+            </button>
+            {isMenuOpen && (
+              <div
+                className="absolute right-0 mt-2 w-48 bg-gray-700 rounded-md shadow-lg z-10"
+                onMouseLeave={() => setIsMenuOpen(false)}
+              >
+                <button
+                  onClick={() => {
+                    removeSelectedRegions();
+                    setIsMenuOpen(false);
+                  }}
+                  disabled={selectedRegions.length === 0}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 disabled:opacity-50"
+                >
+                  Delete Selected
+                </button>
+                <button
+                  onClick={() => {
+                    triggerImport();
+                    setIsMenuOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-600"
+                >
+                  Import Regions
+                </button>
+                <button
+                  onClick={() => {
+                    handleExport();
+                    setIsMenuOpen(false);
+                  }}
+                  disabled={regions.length === 0}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 disabled:opacity-50"
+                >
+                  Export Regions
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleImport}
+        className="hidden"
+        accept=".json"
+      />
       {regions.length === 0 ? (
         <p className="text-gray-400">No regions created yet.</p>
       ) : (
@@ -109,43 +182,33 @@ export function RegionPanel() {
             <li
               key={region.id}
               className={`p-3 rounded-md flex justify-between items-center transition-colors ${
-                activeRegion?.id === region.id
+                regionPlayback.currentRegionId === region.id
                   ? 'bg-indigo-600'
                   : isRegionSelected(region.id)
                   ? 'bg-blue-600'
                   : 'bg-gray-700'
               }`}
             >
-              <div>
-                <p className="font-semibold">{region.label || `Region ${region.id.substring(0, 6)}`}</p>
-                <p className="text-sm text-gray-300">
-                  {formatTime(region.start)} - {formatTime(region.end)}
-                </p>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={isRegionSelected(region.id)}
+                  onChange={() => selectRegion(region.id, !isRegionSelected(region.id))}
+                  className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                <div className="ml-4">
+                  <p className="font-semibold">{region.label || `Region ${region.id.substring(0, 6)}`}</p>
+                  <p className="text-sm text-gray-300">
+                    {formatTime(region.start)} - {formatTime(region.end)}
+                  </p>
+                </div>
               </div>
               <div className="space-x-2">
-                <button
-                  className="btn-primary btn-sm"
-                  onClick={() => selectRegion(region.id, !isRegionSelected(region.id))}
-                >
-                  {isRegionSelected(region.id) ? 'Deselect' : 'Select'}
-                </button>
-                <button
-                  className="btn-primary btn-sm"
-                  onClick={() => playRegion(region)}
-                >
-                  Play
-                </button>
                 <button
                   className="btn-secondary btn-sm"
                   onClick={() => handleEditRegion(region)}
                 >
                   Edit
-                </button>
-                <button
-                  className="btn-danger btn-sm"
-                  onClick={() => handleRemoveRegion(region.id)}
-                >
-                  Delete
                 </button>
               </div>
             </li>

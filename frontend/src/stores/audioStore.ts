@@ -30,10 +30,17 @@ interface AudioState {
   duration: number;
   volume: number;
   speed: number;
-  activeRegion: AudioRegion | null;
   
   // Wavesurfer instance
   wavesurfer: WaveSurfer | null;
+
+  // Region playback state
+  regionPlayback: {
+    isPlaying: boolean;
+    isLooping: boolean;
+    queue: string[]; // Array of region IDs
+    currentRegionId: string | null;
+  };
 
   // Regions and analysis
   regions: AudioRegion[];
@@ -71,9 +78,12 @@ interface AudioActions {
   addRegion: (region: AudioRegion) => void;
   updateRegion: (id: string, updates: Partial<AudioRegion>) => void;
   removeRegion: (id: string) => void;
+  removeSelectedRegions: () => void;
   selectRegion: (id: string, selected?: boolean) => void;
   clearRegions: () => void;
-  playRegion: (region: AudioRegion) => void;
+  playSelectedRegions: () => void;
+  pauseRegionPlayback: () => void;
+  toggleLoop: () => void;
   exportRegions: () => string;
   importRegions: (regionsData: string) => void;
   
@@ -153,11 +163,18 @@ export const useAudioStore = create<AudioStore>()(
     duration: 0,
     volume: 1,
     speed: 1,
-    activeRegion: null,
 
     // Wavesurfer instance
     wavesurfer: null,
     
+    // Region playback state
+    regionPlayback: {
+      isPlaying: false,
+      isLooping: true,
+      queue: [],
+      currentRegionId: null,
+    },
+
     // Regions and analysis
     regions: [],
     selectedRegions: [],
@@ -302,6 +319,14 @@ export const useAudioStore = create<AudioStore>()(
       }));
     },
 
+    removeSelectedRegions: () => {
+      logger.info('Removing selected regions');
+      set(state => ({
+        regions: state.regions.filter(region => !state.selectedRegions.includes(region.id)),
+        selectedRegions: [],
+      }));
+    },
+
     selectRegion: (id: string, selected = true) => {
       set(state => ({
         selectedRegions: selected
@@ -315,11 +340,85 @@ export const useAudioStore = create<AudioStore>()(
       set({ regions: [], selectedRegions: [] });
     },
 
-    playRegion: (region) => {
-      logger.info('Playing region', { regionId: region.id });
-      set({ activeRegion: region });
-      get().wavesurfer?.setTime(region.start);
-      get().wavesurfer?.play();
+    playSelectedRegions: () => {
+      const { wavesurfer, regions, selectedRegions, currentTime, regionPlayback } = get();
+      if (!wavesurfer) return;
+
+      if (selectedRegions.length === 0) {
+        if (regionPlayback.isPlaying) {
+          get().pauseRegionPlayback();
+        }
+        return;
+      }
+
+      const sortedSelectedRegions = [...selectedRegions]
+        .map(id => regions.find(r => r.id === id)!)
+        .filter(Boolean)
+        .sort((a, b) => a.start - b.start);
+
+      const wasPlaying = regionPlayback.isPlaying;
+      const previousRegionId = regionPlayback.currentRegionId;
+      const queue = sortedSelectedRegions.map(r => r.id);
+
+      // 1. Find the region the playhead is currently inside
+      const regionAtPlayhead = sortedSelectedRegions.find(
+        r => currentTime >= r.start && currentTime < r.end
+      );
+
+      let regionToPlay: (typeof sortedSelectedRegions)[0];
+      let startTime: number;
+
+      if (regionAtPlayhead) {
+        // 2. If playhead is in a region, play from there
+        regionToPlay = regionAtPlayhead;
+        startTime = currentTime;
+      } else {
+        // 3. If not, find the next region after the playhead
+        const nextRegion = sortedSelectedRegions.find(r => r.start > currentTime);
+        if (nextRegion) {
+          regionToPlay = nextRegion;
+          startTime = nextRegion.start;
+        } else {
+          // 4. If no next region, wrap around to the first one
+          regionToPlay = sortedSelectedRegions[0];
+          startTime = regionToPlay.start;
+        }
+      }
+
+      set(state => ({
+        regionPlayback: {
+          ...state.regionPlayback,
+          isPlaying: true,
+          queue: queue,
+          currentRegionId: regionToPlay.id,
+        },
+      }));
+
+      // Only seek if we were paused or if the region has changed
+      if (!wasPlaying || previousRegionId !== regionToPlay.id) {
+        wavesurfer.setTime(startTime);
+      }
+      
+      wavesurfer.play();
+    },
+
+    pauseRegionPlayback: () => {
+      get().wavesurfer?.pause();
+      set(state => ({
+        regionPlayback: {
+          ...state.regionPlayback,
+          isPlaying: false,
+        },
+      }));
+    },
+
+    toggleLoop: () => {
+      set(state => ({
+        regionPlayback: {
+          ...state.regionPlayback,
+          isLooping: !state.regionPlayback.isLooping,
+        }
+      }));
     },
 
     exportRegions: () => {
@@ -502,16 +601,60 @@ useAudioStore.subscribe(
     if (!wavesurfer) return;
 
     const subscription = wavesurfer.on('audioprocess', (currentTime) => {
-      const { activeRegion } = useAudioStore.getState();
-      if (activeRegion && currentTime >= activeRegion.end) {
-        wavesurfer.pause();
-        useAudioStore.setState({ activeRegion: null });
+      const { regionPlayback, regions, playSelectedRegions, pauseRegionPlayback, setSpeed } = useAudioStore.getState();
+      
+      if (!regionPlayback.isPlaying || !regionPlayback.currentRegionId) {
+        return;
+      }
+
+      const currentRegion = regions.find(r => r.id === regionPlayback.currentRegionId);
+
+      if (currentRegion && currentTime >= currentRegion.end) {
+        const { queue, isLooping } = regionPlayback;
+        const currentIndex = queue.indexOf(currentRegion.id);
+        const nextIndex = currentIndex + 1;
+
+        if (nextIndex < queue.length) {
+          const nextRegionId = queue[nextIndex];
+          const nextRegion = regions.find(r => r.id === nextRegionId)!;
+          useAudioStore.setState(state => ({
+            regionPlayback: { ...state.regionPlayback, currentRegionId: nextRegionId }
+          }));
+          wavesurfer.setTime(nextRegion.start);
+          wavesurfer.play();
+        } else {
+          if (isLooping) {
+            const firstRegionId = queue[0];
+            const firstRegion = regions.find(r => r.id === firstRegionId)!;
+            useAudioStore.setState(state => ({
+              regionPlayback: { ...state.regionPlayback, currentRegionId: firstRegionId }
+            }));
+            wavesurfer.setTime(firstRegion.start);
+            wavesurfer.play();
+          } else {
+            pauseRegionPlayback(); 
+          }
+        }
       }
     });
 
     return () => {
       subscription();
     };
+  }
+);
+
+useAudioStore.subscribe(
+  (state) => state.selectedRegions,
+  (selectedRegions, previousSelectedRegions) => {
+    const { regionPlayback, playSelectedRegions, pauseRegionPlayback } = useAudioStore.getState();
+    if (regionPlayback.isPlaying) {
+      if (selectedRegions.length === 0) {
+        pauseRegionPlayback();
+      } else {
+        playSelectedRegions();
+      }
+    }
   }
 );
 

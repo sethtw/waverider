@@ -32,41 +32,11 @@ export interface AudioMetadata {
 // ============================================================================
 // Audio Profile Types
 // ============================================================================
-
-export interface AudioProfile {
-  id: string;
-  name: string;
-  description: string;
-  type: ProfileType;
-  parameters: ProfileParameters;
-  createdAt: Date;
-  updatedAt: Date;
-  isDefault?: boolean;
-}
-
-export type ProfileType = 
-  | 'quiet'
-  | 'intensity'
-  | 'transition'
-  | 'custom';
-
-export interface ProfileParameters {
-  // Quiet profile parameters
-  maxAmplitude?: number;
-  minDuration?: number;
-  
-  // Intensity profile parameters
-  minAmplitude?: number;
-  threshold?: number;
-  
-  // Transition profile parameters
-  sensitivity?: number;
-  windowSize?: number;
-  
-  // Custom parameters
-  [key: string]: any;
-}
-
+export type { 
+  AudioProfile,
+  ProfileType,
+  ProfileParameters
+} from '@shared/types';
 // ============================================================================
 // Region Types
 // ============================================================================
@@ -190,23 +160,4 @@ export type DeepPartial<T> = {
 
 export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 
-export type RequiredFields<T, K extends keyof T> = T & Required<Pick<T, K>>;
-
-// ============================================================================
-// API Response Types
-// ============================================================================
-
-export interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  message?: string;
-}
-
-export interface PaginatedResponse<T> {
-  data: T[];
-  total: number;
-  page: number;
-  limit: number;
-  hasMore: boolean;
-} 
+export type RequiredFields<T, K extends keyof T> = T & Required<Pick<T, K>>; 

@@ -1,7 +1,18 @@
 /**
- * Core type definitions for the Waverider audio analysis application
- * @module types
+ * Shared type definitions for the Waverider audio analysis application
+ * @module shared/types
  */
+
+// ============================================================================
+// API Response Types
+// ============================================================================
+
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  message?: string;
+}
 
 // ============================================================================
 // Audio Profile Types
@@ -18,13 +29,26 @@ export interface AudioProfile {
   isDefault?: boolean;
 }
 
-export type ProfileType = 
+export type ProfileType =
   | 'quiet'
   | 'intensity'
   | 'transition'
   | 'custom';
 
 export interface ProfileParameters {
+  // Quiet profile parameters
+  maxAmplitude?: number;
+  minDuration?: number;
+
+  // Intensity profile parameters
+  minAmplitude?: number;
+  threshold?: number;
+
+  // Transition profile parameters
+  sensitivity?: number;
+  windowSize?: number;
+
+  // Custom parameters
   [key: string]: any;
 }
 

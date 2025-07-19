@@ -6,12 +6,12 @@
 import type { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../utils/logger.ts';
-import type { AudioProfile } from '../types.ts';
+import type { AudioProfile, ApiResponse } from '../../../shared/types/index.ts';
 import { profiles } from '../data/db.ts';
 
 const log = logger.child({ service: 'profilesController' });
 
-export const getProfiles = (req: Request, res: Response) => {
+export const getProfiles = (req: Request, res: Response<ApiResponse<AudioProfile[]>>) => {
   try {
     res.json({
       success: true,
@@ -26,7 +26,7 @@ export const getProfiles = (req: Request, res: Response) => {
   }
 };
 
-export const getProfileById = (req: Request, res: Response) => {
+export const getProfileById = (req: Request, res: Response<ApiResponse<AudioProfile>>) => {
   try {
     const { id } = req.params;
     const profile = profiles.find((p: AudioProfile) => p.id === id);
@@ -51,7 +51,7 @@ export const getProfileById = (req: Request, res: Response) => {
   }
 };
 
-export const createProfile = (req: Request, res: Response) => {
+export const createProfile = (req: Request, res: Response<ApiResponse<AudioProfile>>) => {
   try {
     const { name, description, type, parameters }: AudioProfile = req.body;
     
@@ -90,13 +90,13 @@ export const createProfile = (req: Request, res: Response) => {
   }
 };
 
-export const updateProfile = (req: Request, res: Response) => {
+export const updateProfile = (req: Request, res: Response<ApiResponse<AudioProfile>>) => {
   try {
     const { id } = req.params;
     const updates: Partial<AudioProfile> = req.body;
     
     const profileIndex = profiles.findIndex((p: AudioProfile) => p.id === id);
-    
+
     if (profileIndex === -1) {
       return res.status(404).json({
         success: false,
@@ -134,7 +134,7 @@ export const updateProfile = (req: Request, res: Response) => {
   }
 };
 
-export const deleteProfile = (req: Request, res: Response) => {
+export const deleteProfile = (req: Request, res: Response<ApiResponse<{ message: string }>>) => {
   try {
     const { id } = req.params;
     
@@ -171,7 +171,7 @@ export const deleteProfile = (req: Request, res: Response) => {
   }
 };
 
-export const testProfile = (req: Request, res: Response) => {
+export const testProfile = (req: Request, res: Response<ApiResponse<any>>) => {
   try {
     const { id } = req.params;
     const { audioData, options = {} }: { audioData: number[]; options?: Record<string, unknown> } = req.body;

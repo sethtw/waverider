@@ -37,3 +37,12 @@
 {"level":"info","message":"Analysis request received","options":{"profiles":[{"createdAt":"2025-07-18T21:38:01.410Z","description":"Detects periods of low amplitude audio","id":"quiet-profile","isDefault":true,"name":"Quiet Section","parameters":{"maxAmplitude":0.1,"minDuration":2},"type":"quiet","updatedAt":"2025-07-18T21:38:01.410Z"}],"sampleRate":44100},"sampleCount":1780499,"service":"analysisRoutes","timestamp":"2025-07-18 14:52:36"}
 {"level":"info","message":"Starting audio analysis","options":{"profiles":[{"createdAt":"2025-07-18T21:38:01.410Z","description":"Detects periods of low amplitude audio","id":"quiet-profile","isDefault":true,"name":"Quiet Section","parameters":{"maxAmplitude":0.1,"minDuration":2},"type":"quiet","updatedAt":"2025-07-18T21:38:01.410Z"}],"sampleRate":44100},"sampleCount":1780499,"service":"analysisEngine","timestamp":"2025-07-18 14:52:36"}
 {"level":"info","message":"Analysis completed successfully","resultId":"f78cb2bc-b998-40e2-99e0-22179c020fd7","service":"analysisEngine","timestamp":"2025-07-18 14:52:36"}
+{"level":"info","message":"Waverider Analysis Engine running on port 3000","timestamp":"2025-07-18 14:56:16"}
+{"level":"info","message":"Health check available at http://localhost:3000/health","timestamp":"2025-07-18 14:56:16"}
+{"level":"info","message":"Waverider Analysis Engine running on port 3000","timestamp":"2025-07-18 14:56:18"}
+{"level":"info","message":"Health check available at http://localhost:3000/health","timestamp":"2025-07-18 14:56:18"}
+{"level":"info","message":"Waverider Analysis Engine running on port 3000","timestamp":"2025-07-18 14:56:19"}
+{"level":"info","message":"Health check available at http://localhost:3000/health","timestamp":"2025-07-18 14:56:19"}
+{"level":"info","message":"Waverider Analysis Engine running on port 3000","timestamp":"2025-07-18 15:09:39"}
+{"level":"info","message":"Health check available at http://localhost:3000/health","timestamp":"2025-07-18 15:09:39"}
+{"error":"unsupported charset \"UTF-8\"","ip":"::1","level":"error","message":"Unhandled error","method":"POST","service":"errorHandler","stack":"UnsupportedMediaTypeError: unsupported charset \"UTF-8\"\n    at C:\\repos\\waverider\\backend\\node_modules\\body-parser\\lib\\read.js:85:18\n    at AsyncResource.runInAsyncScope (node:async_hooks:214:14)\n    at invokeCallback (C:\\repos\\waverider\\backend\\node_modules\\raw-body\\index.js:238:16)\n    at processTicksAndRejections (node:internal/process/task_queues:85:11)","timestamp":"2025-07-18 16:54:13","url":"/api/analysis/analyze"}

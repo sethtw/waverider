@@ -5,9 +5,23 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Backend: Launch via NPM",
+      "request": "launch",
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
+      "runtimeExecutable": "npm",
+      "cwd": "${workspaceFolder}/backend",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "node"
+    },
+    {
       "type": "chrome",
       "request": "launch",
-      "name": "Launch Chrome against localhost",
+      "name": "Frontend: Launch Chrome against localhost",
       "url": "http://localhost:5173/",
       "webRoot": "${workspaceFolder}/frontend"
     }

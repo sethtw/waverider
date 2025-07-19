@@ -1,23 +1,17 @@
 /**
- * Sessions API routes
- * @module routes/sessions
+ * Controllers for sessions API
+ * @module controllers/sessions
  */
 
-import express from 'express';
+import type { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { logger } from '../utils/logger.js';
+import { logger } from '../utils/logger.ts';
+import type { AudioSession } from '../types.ts';
+import { sessions } from '../data/db.ts';
 
-const router = express.Router();
-const log = logger.child({ service: 'sessionRoutes' });
+const log = logger.child({ service: 'sessionsController' });
 
-// In-memory storage for sessions (in production, use a database)
-let sessions = [];
-
-/**
- * GET /api/sessions
- * Get all sessions
- */
-router.get('/', (req, res) => {
+export const getSessions = (req: Request, res: Response) => {
   try {
     res.json({
       success: true,
@@ -30,16 +24,12 @@ router.get('/', (req, res) => {
       error: 'Failed to retrieve sessions'
     });
   }
-});
+};
 
-/**
- * GET /api/sessions/:id
- * Get a specific session
- */
-router.get('/:id', (req, res) => {
+export const getSessionById = (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const session = sessions.find(s => s.id === id);
+    const session = sessions.find((s: AudioSession) => s.id === id);
     
     if (!session) {
       return res.status(404).json({
@@ -59,15 +49,11 @@ router.get('/:id', (req, res) => {
       error: 'Failed to retrieve session'
     });
   }
-});
+};
 
-/**
- * POST /api/sessions
- * Create a new session
- */
-router.post('/', (req, res) => {
+export const createSession = (req: Request, res: Response) => {
   try {
-    const { name, audioSource, analysis, playbackSettings, regions } = req.body;
+    const { name, audioSource, analysis, playbackSettings, regions }: AudioSession = req.body;
     
     if (!name || !audioSource) {
       return res.status(400).json({
@@ -76,7 +62,7 @@ router.post('/', (req, res) => {
       });
     }
     
-    const newSession = {
+    const newSession: AudioSession = {
       id: uuidv4(),
       name,
       audioSource,
@@ -108,18 +94,14 @@ router.post('/', (req, res) => {
       error: 'Failed to create session'
     });
   }
-});
+};
 
-/**
- * PUT /api/sessions/:id
- * Update a session
- */
-router.put('/:id', (req, res) => {
+export const updateSession = (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const updates = req.body;
+    const updates: Partial<AudioSession> = req.body;
     
-    const sessionIndex = sessions.findIndex(s => s.id === id);
+    const sessionIndex = sessions.findIndex((s: AudioSession) => s.id === id);
     
     if (sessionIndex === -1) {
       return res.status(404).json({
@@ -128,7 +110,7 @@ router.put('/:id', (req, res) => {
       });
     }
     
-    const updatedSession = {
+    const updatedSession: AudioSession = {
       ...sessions[sessionIndex],
       ...updates,
       updatedAt: new Date()
@@ -149,17 +131,13 @@ router.put('/:id', (req, res) => {
       error: 'Failed to update session'
     });
   }
-});
+};
 
-/**
- * DELETE /api/sessions/:id
- * Delete a session
- */
-router.delete('/:id', (req, res) => {
+export const deleteSession = (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     
-    const sessionIndex = sessions.findIndex(s => s.id === id);
+    const sessionIndex = sessions.findIndex((s: AudioSession) => s.id === id);
     
     if (sessionIndex === -1) {
       return res.status(404).json({
@@ -183,16 +161,12 @@ router.delete('/:id', (req, res) => {
       error: 'Failed to delete session'
     });
   }
-});
+};
 
-/**
- * POST /api/sessions/:id/export
- * Export a session
- */
-router.post('/:id/export', (req, res) => {
+export const exportSession = (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const session = sessions.find(s => s.id === id);
+    const session = sessions.find((s: AudioSession) => s.id === id);
     
     if (!session) {
       return res.status(404).json({
@@ -218,15 +192,11 @@ router.post('/:id/export', (req, res) => {
       error: 'Failed to export session'
     });
   }
-});
+};
 
-/**
- * POST /api/sessions/import
- * Import a session
- */
-router.post('/import', (req, res) => {
+export const importSession = (req: Request, res: Response) => {
   try {
-    const { sessionData } = req.body;
+    const { sessionData }: { sessionData: { session: AudioSession } } = req.body;
     
     if (!sessionData || !sessionData.session) {
       return res.status(400).json({
@@ -235,9 +205,9 @@ router.post('/import', (req, res) => {
       });
     }
     
-    const importedSession = {
+    const importedSession: AudioSession = {
       ...sessionData.session,
-      id: uuidv4(), // Generate new ID for imported session
+      id: uuidv4(),
       name: `${sessionData.session.name} (Imported)`,
       createdAt: new Date(),
       updatedAt: new Date()
@@ -258,6 +228,4 @@ router.post('/import', (req, res) => {
       error: 'Failed to import session'
     });
   }
-});
-
-export { router as sessionRoutes }; 
+}; 

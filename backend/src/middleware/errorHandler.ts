@@ -3,9 +3,15 @@
  * @module middleware/errorHandler
  */
 
-import { logger } from '../utils/logger.js';
+import type { Request, Response, NextFunction } from 'express';
+import { logger } from '../utils/logger.ts';
 
-export const errorHandler = (err, req, res, next) => {
+interface AppError extends Error {
+  statusCode?: number;
+  code?: string;
+}
+
+export const errorHandler = (err: AppError, req: Request, res: Response, next: NextFunction) => {
   const log = logger.child({ service: 'errorHandler' });
   
   // Log the error
@@ -18,8 +24,8 @@ export const errorHandler = (err, req, res, next) => {
   });
 
   // Determine error type and response
-  let statusCode = 500;
-  let message = 'Internal Server Error';
+  let statusCode: number = err.statusCode || 500;
+  let message: string = 'Internal Server Error';
 
   if (err.name === 'ValidationError') {
     statusCode = 400;

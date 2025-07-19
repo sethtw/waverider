@@ -4,21 +4,22 @@
  */
 
 import express from 'express';
+import type { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
-import { analysisRoutes } from './routes/analysis.js';
-import { profileRoutes } from './routes/profiles.js';
-import { sessionRoutes } from './routes/sessions.js';
-import { errorHandler } from './middleware/errorHandler.js';
-import { logger } from './utils/logger.js';
+import { analysisRoutes } from './routes/analysis.ts';
+import { profileRoutes } from './routes/profiles.ts';
+import { sessionRoutes } from './routes/sessions.ts';
+import { errorHandler } from './middleware/errorHandler.ts';
+import { logger } from './utils/logger.ts';
 
 // Load environment variables
 dotenv.config();
 
-const app = express();
-const PORT = process.env.PORT || 3001;
+const app: Express = express();
+const PORT: number = parseInt(process.env.PORT as string, 10) || 3001;
 
 // Middleware
 app.use(helmet());
@@ -31,7 +32,7 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Health check endpoint
-app.get('/health', (req, res) => {
+app.get('/health', (req: Request, res: Response) => {
   res.json({ 
     status: 'healthy', 
     timestamp: new Date().toISOString(),
@@ -48,7 +49,7 @@ app.use('/api/sessions', sessionRoutes);
 app.use(errorHandler);
 
 // 404 handler
-app.use('*', (req, res) => {
+app.use('*', (req: Request, res: Response) => {
   res.status(404).json({ 
     error: 'Endpoint not found',
     path: req.originalUrl 
@@ -56,9 +57,9 @@ app.use('*', (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   logger.info(`Waverider Analysis Engine running on port ${PORT}`);
   logger.info(`Health check available at http://localhost:${PORT}/health`);
 });
 
-export default app; 
+export { app as default, server }; 

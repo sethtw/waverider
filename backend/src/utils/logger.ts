@@ -3,18 +3,18 @@
  * @module utils/logger
  */
 
-import { createLogger, format, transports } from 'winston';
+import { createLogger, format, transports, Logger } from 'winston';
 
 const { combine, timestamp, printf, colorize } = format;
 
 // Custom format for console output
 const consoleFormat = printf(({ level, message, timestamp, ...meta }) => {
   const metaStr = Object.keys(meta).length ? JSON.stringify(meta, null, 2) : '';
-  return `${timestamp} [${level.toUpperCase()}]: ${message} ${metaStr}`;
+  return `${timestamp as string} [${level.toUpperCase()}]: ${message as string} ${metaStr}`;
 });
 
 // Create logger instance
-const logger = createLogger({
+const logger: Logger = createLogger({
   level: process.env.LOG_LEVEL || 'info',
   format: combine(
     timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),

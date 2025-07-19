@@ -1,39 +1,18 @@
 /**
- * Analysis API routes
- * @module routes/analysis
+ * Controllers for analysis API
+ * @module controllers/analysis
  */
 
-import express from 'express';
-import multer from 'multer';
-import { analysisEngine } from '../services/analysisEngine.js';
-import { logger } from '../utils/logger.js';
+import type { Request, Response, NextFunction } from 'express';
+import { analysisEngine } from '../services/analysisEngine.ts';
+import { logger } from '../utils/logger.ts';
+import type { AudioProfile } from '../types.ts';
 
-const router = express.Router();
-const log = logger.child({ service: 'analysisRoutes' });
+const log = logger.child({ service: 'analysisController' });
 
-// Configure multer for file uploads
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: {
-    fileSize: 50 * 1024 * 1024, // 50MB limit
-  },
-  fileFilter: (req, file, cb) => {
-    // Accept audio files
-    if (file.mimetype.startsWith('audio/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only audio files are allowed'), false);
-    }
-  }
-});
-
-/**
- * POST /api/analysis/analyze
- * Analyze audio data
- */
-router.post('/analyze', async (req, res, next) => {
+export const analyzeAudio = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { audioData, options = {} } = req.body;
+    const { audioData, options = {} }: { audioData: number[]; options?: Record<string, unknown> } = req.body;
     
     if (!audioData || !Array.isArray(audioData)) {
       return res.status(400).json({
@@ -62,13 +41,9 @@ router.post('/analyze', async (req, res, next) => {
     log.error('Analysis failed', error);
     next(error);
   }
-});
+};
 
-/**
- * POST /api/analysis/analyze-file
- * Analyze uploaded audio file
- */
-router.post('/analyze-file', upload.single('audio'), async (req, res, next) => {
+export const analyzeFile = async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.file) {
       return res.status(400).json({
@@ -101,15 +76,11 @@ router.post('/analyze-file', upload.single('audio'), async (req, res, next) => {
     log.error('File analysis failed', error);
     next(error);
   }
-});
+};
 
-/**
- * POST /api/analysis/regions
- * Detect regions based on profiles
- */
-router.post('/regions', async (req, res, next) => {
+export const detectRegions = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { audioData, profiles = [], options = {} } = req.body;
+    const { audioData, profiles, options = {} }: { audioData: number[]; profiles: AudioProfile[]; options?: Record<string, unknown> } = req.body;
     
     if (!audioData || !Array.isArray(audioData)) {
       return res.status(400).json({
@@ -137,7 +108,7 @@ router.post('/regions', async (req, res, next) => {
       data: {
         regions,
         count: regions.length,
-        profiles: profiles.map(p => p.id)
+        profiles: profiles.map((p: AudioProfile) => p.id)
       }
     });
     
@@ -145,15 +116,11 @@ router.post('/regions', async (req, res, next) => {
     log.error('Region detection failed', error);
     next(error);
   }
-});
+};
 
-/**
- * POST /api/analysis/patterns
- * Detect patterns in audio data
- */
-router.post('/patterns', async (req, res, next) => {
+export const detectPatterns = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { audioData, options = {} } = req.body;
+    const { audioData, options = {} }: { audioData: number[]; options?: Record<string, unknown> } = req.body;
     
     if (!audioData || !Array.isArray(audioData)) {
       return res.status(400).json({
@@ -182,15 +149,11 @@ router.post('/patterns', async (req, res, next) => {
     log.error('Pattern detection failed', error);
     next(error);
   }
-});
+};
 
-/**
- * POST /api/analysis/spectral
- * Perform spectral analysis
- */
-router.post('/spectral', async (req, res, next) => {
+export const analyzeSpectral = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { audioData, options = {} } = req.body;
+    const { audioData, options = {} }: { audioData: number[]; options?: Record<string, unknown> } = req.body;
     
     if (!audioData || !Array.isArray(audioData)) {
       return res.status(400).json({
@@ -219,13 +182,9 @@ router.post('/spectral', async (req, res, next) => {
     log.error('Spectral analysis failed', error);
     next(error);
   }
-});
+};
 
-/**
- * GET /api/analysis/status
- * Get analysis engine status
- */
-router.get('/status', (req, res) => {
+export const getStatus = (req: Request, res: Response) => {
   res.json({
     success: true,
     data: {
@@ -240,6 +199,4 @@ router.get('/status', (req, res) => {
       ]
     }
   });
-});
-
-export { router as analysisRoutes }; 
+}; 

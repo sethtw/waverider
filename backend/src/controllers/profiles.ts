@@ -1,63 +1,17 @@
 /**
- * Profiles API routes
- * @module routes/profiles
+ * Controllers for profiles API
+ * @module controllers/profiles
  */
 
-import express from 'express';
+import type { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { logger } from '../utils/logger.js';
+import { logger } from '../utils/logger.ts';
+import type { AudioProfile } from '../types.ts';
+import { profiles } from '../data/db.ts';
 
-const router = express.Router();
-const log = logger.child({ service: 'profileRoutes' });
+const log = logger.child({ service: 'profilesController' });
 
-// In-memory storage for profiles (in production, use a database)
-let profiles = [
-  {
-    id: 'quiet-profile',
-    name: 'Quiet Section',
-    description: 'Detects periods of low amplitude audio',
-    type: 'quiet',
-    parameters: {
-      maxAmplitude: 0.1,
-      minDuration: 2.0,
-    },
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    isDefault: true,
-  },
-  {
-    id: 'intensity-profile',
-    name: 'High Intensity',
-    description: 'Detects periods of high amplitude audio',
-    type: 'intensity',
-    parameters: {
-      minAmplitude: 0.7,
-      threshold: 0.8,
-    },
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    isDefault: true,
-  },
-  {
-    id: 'transition-profile',
-    name: 'Transition',
-    description: 'Detects transition periods between quiet and loud',
-    type: 'transition',
-    parameters: {
-      sensitivity: 0.5,
-      windowSize: 1.0,
-    },
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    isDefault: true,
-  },
-];
-
-/**
- * GET /api/profiles
- * Get all profiles
- */
-router.get('/', (req, res) => {
+export const getProfiles = (req: Request, res: Response) => {
   try {
     res.json({
       success: true,
@@ -70,16 +24,12 @@ router.get('/', (req, res) => {
       error: 'Failed to retrieve profiles'
     });
   }
-});
+};
 
-/**
- * GET /api/profiles/:id
- * Get a specific profile
- */
-router.get('/:id', (req, res) => {
+export const getProfileById = (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const profile = profiles.find(p => p.id === id);
+    const profile = profiles.find((p: AudioProfile) => p.id === id);
     
     if (!profile) {
       return res.status(404).json({
@@ -99,15 +49,11 @@ router.get('/:id', (req, res) => {
       error: 'Failed to retrieve profile'
     });
   }
-});
+};
 
-/**
- * POST /api/profiles
- * Create a new profile
- */
-router.post('/', (req, res) => {
+export const createProfile = (req: Request, res: Response) => {
   try {
-    const { name, description, type, parameters } = req.body;
+    const { name, description, type, parameters }: AudioProfile = req.body;
     
     if (!name || !type || !parameters) {
       return res.status(400).json({
@@ -116,7 +62,7 @@ router.post('/', (req, res) => {
       });
     }
     
-    const newProfile = {
+    const newProfile: AudioProfile = {
       id: uuidv4(),
       name,
       description: description || '',
@@ -142,18 +88,14 @@ router.post('/', (req, res) => {
       error: 'Failed to create profile'
     });
   }
-});
+};
 
-/**
- * PUT /api/profiles/:id
- * Update a profile
- */
-router.put('/:id', (req, res) => {
+export const updateProfile = (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const updates = req.body;
+    const updates: Partial<AudioProfile> = req.body;
     
-    const profileIndex = profiles.findIndex(p => p.id === id);
+    const profileIndex = profiles.findIndex((p: AudioProfile) => p.id === id);
     
     if (profileIndex === -1) {
       return res.status(404).json({
@@ -162,7 +104,6 @@ router.put('/:id', (req, res) => {
       });
     }
     
-    // Don't allow updating default profiles
     if (profiles[profileIndex].isDefault) {
       return res.status(400).json({
         success: false,
@@ -170,7 +111,7 @@ router.put('/:id', (req, res) => {
       });
     }
     
-    const updatedProfile = {
+    const updatedProfile: AudioProfile = {
       ...profiles[profileIndex],
       ...updates,
       updatedAt: new Date()
@@ -191,17 +132,13 @@ router.put('/:id', (req, res) => {
       error: 'Failed to update profile'
     });
   }
-});
+};
 
-/**
- * DELETE /api/profiles/:id
- * Delete a profile
- */
-router.delete('/:id', (req, res) => {
+export const deleteProfile = (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     
-    const profileIndex = profiles.findIndex(p => p.id === id);
+    const profileIndex = profiles.findIndex((p: AudioProfile) => p.id === id);
     
     if (profileIndex === -1) {
       return res.status(404).json({
@@ -210,7 +147,6 @@ router.delete('/:id', (req, res) => {
       });
     }
     
-    // Don't allow deleting default profiles
     if (profiles[profileIndex].isDefault) {
       return res.status(400).json({
         success: false,
@@ -233,18 +169,14 @@ router.delete('/:id', (req, res) => {
       error: 'Failed to delete profile'
     });
   }
-});
+};
 
-/**
- * POST /api/profiles/:id/test
- * Test a profile with sample data
- */
-router.post('/:id/test', (req, res) => {
+export const testProfile = (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { audioData, options = {} } = req.body;
+    const { audioData, options = {} }: { audioData: number[]; options?: Record<string, unknown> } = req.body;
     
-    const profile = profiles.find(p => p.id === id);
+    const profile = profiles.find((p: AudioProfile) => p.id === id);
     
     if (!profile) {
       return res.status(404).json({
@@ -260,15 +192,12 @@ router.post('/:id/test', (req, res) => {
       });
     }
     
-    // Convert array to Float32Array
     const float32Data = new Float32Array(audioData);
     
-    // Test the profile
     const testResults = {
       profile: profile,
       sampleCount: float32Data.length,
       testTimestamp: new Date().toISOString(),
-      // TODO: Implement actual profile testing
       message: 'Profile testing not yet implemented'
     };
     
@@ -283,6 +212,4 @@ router.post('/:id/test', (req, res) => {
       error: 'Failed to test profile'
     });
   }
-});
-
-export { router as profileRoutes }; 
+}; 

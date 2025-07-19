@@ -3,11 +3,14 @@
  * @module services/analysisEngine
  */
 
-import { logger } from '../utils/logger.js';
+import { logger } from '../utils/logger.ts';
 import fftjs from 'fft-js';
 import { v4 as uuidv4 } from 'uuid';
+import type { AudioAnalysis, AudioProfile, AudioRegion } from '../types.ts';
 
 class AnalysisEngine {
+  private logger;
+
   constructor() {
     this.logger = logger.child({ service: 'analysisEngine' });
   }
@@ -18,40 +21,33 @@ class AnalysisEngine {
    * @param {Object} options - Analysis options
    * @returns {Object} Analysis results
    */
-  async analyzeAudio(audioData, options = {}) {
+  async analyzeAudio(audioData: Float32Array, options: Record<string, any> = {}): Promise<AudioAnalysis> {
     this.logger.info('Starting audio analysis', { 
       sampleCount: audioData.length,
       options 
     });
 
     try {
-      const results = {
+      const results: AudioAnalysis = {
         id: uuidv4(),
         timestamp: new Date().toISOString(),
         sampleCount: audioData.length,
-        analysis: {}
+        analysis: {
+          amplitude: this.analyzeAmplitude(audioData, options),
+          spectral: this.analyzeSpectral(audioData, options),
+          patterns: this.detectPatterns(audioData, options),
+          regions: this.detectRegions(audioData, options)
+        }
       };
-
-      // Basic amplitude analysis
-      results.analysis.amplitude = this.analyzeAmplitude(audioData, options);
-      
-      // Spectral analysis
-      results.analysis.spectral = this.analyzeSpectral(audioData, options);
-      
-      // Pattern detection
-      results.analysis.patterns = this.detectPatterns(audioData, options);
-      
-      // Region detection
-      results.analysis.regions = this.detectRegions(audioData, options);
 
       this.logger.info('Analysis completed successfully', { 
         resultId: results.id 
       });
 
       return results;
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error('Analysis failed', error);
-      throw new Error(`Analysis failed: ${error.message}`);
+      throw new Error(`Analysis failed: ${error.message as string}`);
     }
   }
 
@@ -61,7 +57,7 @@ class AnalysisEngine {
    * @param {Object} options - Analysis options
    * @returns {Object} Amplitude analysis results
    */
-  analyzeAmplitude(audioData, options = {}) {
+  analyzeAmplitude(audioData: Float32Array, options: Record<string, any> = {}): Record<string, number> {
     const { windowSize = 1024 } = options;
     
     const results = {
@@ -107,21 +103,21 @@ class AnalysisEngine {
    * @param {Object} options - Analysis options
    * @returns {Object} Spectral analysis results
    */
-  analyzeSpectral(audioData, options = {}) {
+  analyzeSpectral(audioData: Float32Array, options: Record<string, any> = {}): Record<string, any> {
     const { fftSize = 2048, sampleRate = 44100 } = options;
     
     const results = {
       spectralCentroid: 0,
       spectralRolloff: 0,
       spectralFlux: 0,
-      dominantFrequencies: [],
+      dominantFrequencies: [] as { frequency: number; magnitude: number }[],
       frequencyBands: {}
     };
 
     // Apply window function and perform FFT
     const windowedData = this.applyWindow(audioData.slice(0, fftSize));
-    const fftResult = fftjs.fft(windowedData);
-    const magnitudes = fftResult.map(complex => Math.sqrt(complex[0] * complex[0] + complex[1] * complex[1]));
+    const fftResult: number[][] = fftjs.fft(windowedData);
+    const magnitudes: number[] = fftResult.map((complex: number[]) => Math.sqrt(complex[0] * complex[0] + complex[1] * complex[1]));
 
     // Calculate spectral centroid
     let weightedSum = 0;
@@ -159,10 +155,10 @@ class AnalysisEngine {
    * @param {Object} options - Analysis options
    * @returns {Object} Pattern detection results
    */
-  detectPatterns(audioData, options = {}) {
+  detectPatterns(audioData: Float32Array, options: Record<string, any> = {}): Record<string, any[]> {
     const { threshold = 0.1, minDuration = 0.1 } = options;
     
-    const patterns = {
+    const patterns: Record<string, any[]> = {
       quietSections: [],
       loudSections: [],
       transitions: [],
@@ -193,7 +189,7 @@ class AnalysisEngine {
     }
 
     // Detect transitions
-    patterns.transitions = this.detectTransitions(audioData, sampleRate, threshold);
+    patterns.transitions = this.detectTransitions(audioData, sampleRate as number, threshold as number);
 
     return patterns;
   }
@@ -204,9 +200,9 @@ class AnalysisEngine {
    * @param {Object} options - Analysis options
    * @returns {Array} Detected regions
    */
-  detectRegions(audioData, options = {}) {
+  detectRegions(audioData: Float32Array, options: Record<string, any> = {}): AudioRegion[] {
     const { profiles = [], sampleRate = 44100 } = options;
-    const regions = [];
+    const regions: AudioRegion[] = [];
 
     for (const profile of profiles) {
       const profileRegions = this.applyProfile(audioData, profile, sampleRate);
@@ -223,8 +219,8 @@ class AnalysisEngine {
    * @param {number} sampleRate - Audio sample rate
    * @returns {Array} Regions matching the profile
    */
-  applyProfile(audioData, profile, sampleRate) {
-    const regions = [];
+  applyProfile(audioData: Float32Array, profile: AudioProfile, sampleRate: number): AudioRegion[] {
+    const regions: AudioRegion[] = [];
     const windowSize = Math.floor((profile.parameters.windowSize || 1.0) * sampleRate);
     
     for (let i = 0; i < audioData.length - windowSize; i += windowSize) {
@@ -264,7 +260,7 @@ class AnalysisEngine {
   }
 
   // Helper methods
-  applyWindow(data) {
+  applyWindow(data: Float32Array): Float32Array {
     // Apply Hanning window
     const windowed = new Float32Array(data.length);
     for (let i = 0; i < data.length; i++) {
@@ -274,7 +270,7 @@ class AnalysisEngine {
     return windowed;
   }
 
-  calculateRMS(data) {
+  calculateRMS(data: Float32Array): number {
     let sumSquares = 0;
     for (let i = 0; i < data.length; i++) {
       sumSquares += data[i] * data[i];
@@ -282,7 +278,7 @@ class AnalysisEngine {
     return Math.sqrt(sumSquares / data.length);
   }
 
-  calculateBandEnergy(magnitudes, start, end) {
+  calculateBandEnergy(magnitudes: number[], start: number, end: number): number {
     let energy = 0;
     for (let i = start; i < end; i++) {
       energy += magnitudes[i] * magnitudes[i];
@@ -290,8 +286,8 @@ class AnalysisEngine {
     return energy;
   }
 
-  findDominantFrequencies(magnitudes, sampleRate, fftSize) {
-    const frequencies = [];
+  findDominantFrequencies(magnitudes: number[], sampleRate: number, fftSize: number): { frequency: number; magnitude: number }[] {
+    const frequencies: { frequency: number; magnitude: number }[] = [];
     const threshold = Math.max(...magnitudes) * 0.1;
     
     for (let i = 0; i < magnitudes.length / 2; i++) {
@@ -308,8 +304,8 @@ class AnalysisEngine {
       .slice(0, 5);
   }
 
-  detectTransitions(audioData, sampleRate, threshold) {
-    const transitions = [];
+  detectTransitions(audioData: Float32Array, sampleRate: number, threshold: number): { time: number; change: number; direction: string }[] {
+    const transitions: { time: number; change: number; direction: string }[] = [];
     const windowSize = Math.floor(0.1 * sampleRate); // 100ms windows
     
     for (let i = windowSize; i < audioData.length - windowSize; i += windowSize) {
@@ -329,19 +325,19 @@ class AnalysisEngine {
     return transitions;
   }
 
-  detectTransition(window, parameters) {
+  detectTransition(window: Float32Array, parameters: Record<string, any>): boolean {
     // Simple transition detection based on variance
     const variance = this.calculateVariance(window);
     return variance > (parameters.sensitivity || 0.5);
   }
 
-  calculateVariance(data) {
+  calculateVariance(data: Float32Array): number {
     const mean = data.reduce((sum, val) => sum + val, 0) / data.length;
     const variance = data.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / data.length;
     return variance;
   }
 
-  calculateConfidence(analysis, profile) {
+  calculateConfidence(analysis: Record<string, number>, profile: AudioProfile): number {
     // Calculate confidence based on how well the analysis matches the profile
     let confidence = 0;
     
